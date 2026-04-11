@@ -1,0 +1,57 @@
+﻿@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="card-title mb-4 text-center">Create Account</h2>
+
+                @* Show any success message from a redirect *@
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Success"]</div>
+                }
+
+                @* asp-action tells the form where to POST *@
+                @* asp-antiforgery is added automatically by tag helpers *@
+                <form asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email address</label>
+                        <input asp-for="Email" class="form-control" placeholder="you@example.com" />
+                        @* Shows validation error from ModelState *@
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" class="form-control" placeholder="Min 8 chars, upper, lower, number, symbol" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-secondary w-100">Create Account</button>
+                </form>
+
+                <p class="text-center mt-3 mb-0">
+                    Already have an account? <a asp-action="Login">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* Client-side validation — catches errors before they even hit the server *@
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
