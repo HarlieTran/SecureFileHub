@@ -21,7 +21,7 @@ namespace SecureFileHub
 
             // SQL Server connection
             builder.Services.AddDbContext<AppDbContext>(
-                options => options.UseSqlServer(
+                options => options.UseSqlite(
                     builder.Configuration.GetConnectionString("DefaultConnection")
                     )
                 );
