@@ -1,0 +1,19 @@
+@model SecureFileHub.Models.ShareLink
+@{
+    ViewData["Title"] = "Shared File";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <h2>Shared File</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@Model.File.OriginalName</h5>
+            <p class="card-text text-muted">
+                Type: @Model.File.ContentType<br />
+                Size: @($"{Model.File.FileSizeBytes / 1024.0:F1} KB")<br />
+                Expires: @Model.ExpiresAt.ToString("yyyy-MM-dd HH:mm") UTC
+            </p>
+            <p class="text-warning">This link is <strong>view-only</strong>. Download is not permitted.</p>
+        </div>
+    </div>
+</div>

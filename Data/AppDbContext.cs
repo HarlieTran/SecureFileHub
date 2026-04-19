@@ -9,6 +9,8 @@ namespace SecureFileHub.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<FileRecord> FileRecords { get; set; }
+        public DbSet<ShareLink> ShareLinks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -21,5 +21,7 @@ namespace SecureFileHub.Models
         // Brute-force protection fields
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutUntil { get; set; }
+
+        public ICollection<FileRecord> FileRecords { get; set; } = new List<FileRecord>();
     }
 }

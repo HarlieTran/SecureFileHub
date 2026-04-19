@@ -1,0 +1,109 @@
+@model List<SecureFileHub.Models.FileRecord>
+@{
+    ViewData["Title"] = "My Files";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>My Files</h2>
+        <a href="/Files/Upload" class="btn btn-primary">Upload File</a>
+    </div>
+
+    @if (TempData["ShareUrl"] != null)
+    {
+        <div class="alert alert-success">
+            Share link created: <strong>@TempData["ShareUrl"]</strong>
+            <br /><small>Copy this link and share it. It will expire as configured.</small>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No files uploaded yet.</div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>File Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    @if (User.IsInRole("Admin") || Context.Session.GetString("UserRole") == "Admin")
+                    {
+                        <th>Owner</th>
+                    }
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var file in Model)
+                {
+                    <tr>
+                        <td>@file.OriginalName</td>
+                        <td>@file.ContentType</td>
+                        <td>@($"{file.FileSizeBytes / 1024.0:F1} KB")</td>
+                        <td>@file.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        @if (Context.Session.GetString("UserRole") == "Admin")
+                        {
+                            <td>@file.User?.Email</td>
+                        }
+                        <td>
+                            <a href="/Files/Download/@file.Id" class="btn btn-sm btn-outline-primary">Download</a>
+
+                            <!-- Share modal trigger -->
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#shareModal-@file.Id">
+                                Share
+                            </button>
+
+                            <form method="post" action="/Files/Delete/@file.Id" class="d-inline"
+                                  onsubmit="return confirm('Delete @Html.Raw(file.OriginalName.Replace("'", "\\'"))? This cannot be undone.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <!-- Share Modal -->
+                    <div class="modal fade" id="shareModal-@file.Id" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Share "@file.OriginalName"</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="/Files/Share/@file.Id">
+                                    @Html.AntiForgeryToken()
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Permission</label>
+                                            <select name="permission" class="form-select">
+                                                <option value="View">View only</option>
+                                                <option value="Download">Allow download</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Expires in (hours)</label>
+                                            <input type="number" name="expiryHours" class="form-control" value="24" min="1" max="720" />
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Password (optional)</label>
+                                            <input type="password" name="password" class="form-control" placeholder="Leave blank for no password" />
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Create Link</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </tbody>
+        </table>
+    }
+</div>
