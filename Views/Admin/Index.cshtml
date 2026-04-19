@@ -1,0 +1,90 @@
+@model SecureFileHub.Controllers.AdminViewModel
+@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="container-fluid mt-4">
+    <h2>Admin Panel</h2>
+
+    <!-- Users Table -->
+    <h4 class="mt-4">Users (@Model.Users.Count)</h4>
+    <table class="table table-bordered table-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th><th>Email</th><th>Role</th><th>Created</th><th>Failed Attempts</th><th>Locked Until</th><th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Email</td>
+                    <td><span class="badge @(user.Role == "Admin" ? "bg-danger" : "bg-secondary")">@user.Role</span></td>
+                    <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td>@user.FailedLoginAttempts</td>
+                    <td>@(user.LockoutUntil.HasValue ? user.LockoutUntil.Value.ToString("HH:mm") : "-")</td>
+                    <td>
+                        @if (user.Id.ToString() != Context.Session.GetString("UserId"))
+                        {
+                            <form method="post" action="/Admin/DeleteUser/@user.Id" class="d-inline"
+                                  onsubmit="return confirm('Delete user @user.Email and ALL their files?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">(you)</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Files Table -->
+    <h4 class="mt-4">All Files (@Model.Files.Count)</h4>
+    <table class="table table-bordered table-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th><th>File Name</th><th>Owner</th><th>Type</th><th>Size</th><th>Uploaded</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var file in Model.Files)
+            {
+                <tr>
+                    <td>@file.Id</td>
+                    <td>@file.OriginalName</td>
+                    <td>@file.User?.Email</td>
+                    <td>@file.ContentType</td>
+                    <td>@($"{file.FileSizeBytes / 1024.0:F1} KB")</td>
+                    <td>@file.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Audit Logs Table -->
+    <h4 class="mt-4">Audit Logs (last 200)</h4>
+    <table class="table table-bordered table-sm table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Timestamp</th><th>Event</th><th>User ID</th><th>IP Address</th><th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model.AuditLogs)
+            {
+                <tr>
+                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td><code>@log.Event</code></td>
+                    <td>@(log.UserId ?? "-")</td>
+                    <td>@log.IpAddress</td>
+                    <td>@log.Details</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

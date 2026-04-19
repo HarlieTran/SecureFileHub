@@ -1,8 +1,25 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
+    var isLoggedIn = Context.Session.GetString("UserId") != null;
+    var email = Context.Session.GetString("UserEmail");
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-5">
+    @if (isLoggedIn)
+    {
+        <div class="text-center">
+            <h1>Welcome back, @email</h1>
+            <p class="text-muted">SecureFileHub — store and share files securely.</p>
+            <a href="/Files" class="btn btn-primary btn-lg mt-3">Go to My Files</a>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <h1 class="display-4">SecureFileHub</h1>
+            <p class="lead">Secure file storage with access control and encryption.</p>
+            <a href="/Auth/Register" class="btn btn-primary btn-lg me-2">Get Started</a>
+            <a href="/Auth/Login" class="btn btn-outline-secondary btn-lg">Login</a>
+        </div>
+    }
 </div>
