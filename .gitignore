@@ -1,7 +1,19 @@
+# Secrets
 .env
+
+# Build output
 bin/
 obj/
+
+# SQLite database files
 *.db
 *.db-shm
 *.db-wal
+
+# Uploaded (encrypted) files
 uploads/
+
+# Visual Studio IDE files
+.vs/
+*.csproj.user
+*.sln.user
