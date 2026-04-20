@@ -27,11 +27,14 @@ namespace SecureFileHub.Controllers
 
         private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
 
-        public FilesController(AppDbContext db, AuditService audit, IWebHostEnvironment env)
+        private readonly EncryptionService _encryption;
+
+        public FilesController(AppDbContext db, AuditService audit, IWebHostEnvironment env, EncryptionService encryption)
         {
             _db = db;
             _audit = audit;
             _env = env;
+            _encryption = encryption;
         }
 
         private string? SessionUserId => HttpContext.Session.GetString("UserId");
@@ -66,9 +69,15 @@ namespace SecureFileHub.Controllers
         {
             if (SessionUserId == null) return RedirectToAction("Login", "Auth");
 
-            if (file == null || file.Length == 0)
+            if (file == null)
             {
                 ModelState.AddModelError("", "Please select a file.");
+                return View();
+            }
+
+            if (file.Length == 0)
+            {
+                ModelState.AddModelError("", "The selected file is empty.");
                 return View();
             }
 
@@ -106,8 +115,8 @@ namespace SecureFileHub.Controllers
             Directory.CreateDirectory(uploadDir);
             var filePath = Path.Combine(uploadDir, storedName);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
-                await file.CopyToAsync(stream);
+            var encryptedBytes = await _encryption.EncryptStreamAsync(file.OpenReadStream());
+            await System.IO.File.WriteAllBytesAsync(filePath, encryptedBytes);
 
             var record = new FileRecord
             {
@@ -149,8 +158,8 @@ namespace SecureFileHub.Controllers
 
             await _audit.LogAsync("FILE_DOWNLOAD", SessionUserId, $"Downloaded: {record.OriginalName}");
 
-            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            return File(stream, record.ContentType, record.OriginalName);
+            var plaintext = _encryption.DecryptFile(filePath);
+            return File(plaintext, record.ContentType, record.OriginalName);
         }
 
         // POST /Files/Delete/{id}
@@ -265,8 +274,8 @@ namespace SecureFileHub.Controllers
 
             if (link.Permission == "Download")
             {
-                var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                return File(stream, link.File.ContentType, link.File.OriginalName);
+                var plaintext = _encryption.DecryptFile(filePath);
+                return File(plaintext, link.File.ContentType, link.File.OriginalName);
             }
 
             // View-only: show file info page
