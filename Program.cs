@@ -80,13 +80,15 @@ namespace SecureFileHub
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
-            // Seed default users for testing
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
 
-                if (!db.Users.Any())
+                // Seed test accounts in development only.
+                // In production, default credentials are never created — an admin
+                // account must be created manually after deployment.
+                if (app.Environment.IsDevelopment() && !db.Users.Any())
                 {
                     db.Users.AddRange(
                         new User
