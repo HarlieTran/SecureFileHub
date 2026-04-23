@@ -184,5 +184,59 @@ namespace SecureFileHub.Controllers
             TempData["Success"] = "You have been signed out.";
             return RedirectToAction("Login");
         }
+
+        // GET /Auth/DeleteAccount
+        [HttpGet]
+        public IActionResult DeleteAccount()
+        {
+            if (HttpContext.Session.GetString("UserId") == null)
+                return RedirectToAction("Login");
+
+            return View();
+        }
+
+        // POST /Auth/DeleteAccount
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAccount(string password)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (userId == null) return RedirectToAction("Login");
+
+            var user = await _db.Users
+                .Include(u => u.FileRecords)
+                    .ThenInclude(f => f.ShareLinks)
+                .FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+            if (user == null) return RedirectToAction("Login");
+
+            // Confirm password before deleting
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                await _audit.LogAsync("ACCOUNT_DELETE_FAILED", userId, "Wrong password on self-delete attempt");
+                ModelState.AddModelError("", "Incorrect password. Account was not deleted.");
+                return View();
+            }
+
+            // Delete all files from disk
+            foreach (var file in user.FileRecords)
+            {
+                var filePath = Path.Combine(
+                    Directory.GetCurrentDirectory(), "uploads", file.StoredName);
+                if (System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+            }
+
+            await _audit.LogAsync("ACCOUNT_DELETED", userId, $"User deleted own account: {user.Email}");
+
+            // Remove user (cascade deletes FileRecords and ShareLinks)
+            _db.Users.Remove(user);
+            await _db.SaveChangesAsync();
+
+            HttpContext.Session.Clear();
+
+            TempData["Success"] = "Your account and all associated files have been permanently deleted.";
+            return RedirectToAction("Login");
+        }
     }
 }
