@@ -152,7 +152,7 @@ namespace SecureFileHub.Controllers
             if (record.UserId.ToString() != SessionUserId && SessionRole != "Admin")
             {
                 await _audit.LogAsync("FILE_ACCESS_DENIED", SessionUserId, $"Attempted download of file {id}");
-                return Forbid();
+                return StatusCode(403, "Access denied. You do not have permission to access this file.");
             }
 
             var filePath = Path.Combine(_env.ContentRootPath, "uploads", record.StoredName);
@@ -178,7 +178,7 @@ namespace SecureFileHub.Controllers
             if (record.UserId.ToString() != SessionUserId && SessionRole != "Admin")
             {
                 await _audit.LogAsync("FILE_DELETE_DENIED", SessionUserId, $"Attempted delete of file {id}");
-                return Forbid();
+                return StatusCode(403, "Access denied. You do not have permission to delete this file.");
             }
 
             // Delete file from disk
@@ -209,7 +209,7 @@ namespace SecureFileHub.Controllers
 
             // IDOR check
             if (record.UserId.ToString() != SessionUserId && SessionRole != "Admin")
-                return Forbid();
+                return StatusCode(403, "Access denied. You do not have permission to share this file.");
 
             var link = new ShareLink
             {
