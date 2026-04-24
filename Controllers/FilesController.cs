@@ -65,6 +65,8 @@ namespace SecureFileHub.Controllers
         // POST /Files/Upload
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(104_857_600)] // 100MB — controller enforces the real 10MB limit
+        [RequestFormLimits(MultipartBodyLengthLimit = 104_857_600)]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if (SessionUserId == null) return RedirectToAction("Login", "Auth");

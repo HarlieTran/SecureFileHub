@@ -20,6 +20,17 @@ namespace SecureFileHub
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            // Kestrel allows up to 100MB so oversized files reach the controller
+            // The controller enforces the real 10MB business limit with a friendly message
+            builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 100 * 1024 * 1024;
+            });
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 100 * 1024 * 1024;
+            });
+
             // SQL Server connection
             builder.Services.AddDbContext<AppDbContext>(
                 options => options.UseSqlite(
